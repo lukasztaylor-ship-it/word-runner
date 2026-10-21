@@ -43,6 +43,21 @@ function resolve(){let right=question[4];if(selected===right){sfx("correct");sco
 function rect(x,y,w,h,color,r=0){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
 function label(str,x,y,size=20,color="#fff"){ctx.fillStyle=color;ctx.textAlign="center";ctx.font="bold "+size+"px system-ui";ctx.fillText(str,x,y)}
 function wrapped(str,x,y,maxWidth){let words=str.split(" "),line="",lines=[];ctx.font="bold 16px system-ui";for(let word of words){if(ctx.measureText(line+" "+word).width>maxWidth&&line){lines.push(line);line=word}else line+=(line?" ":"")+word}lines.push(line);lines.slice(0,3).forEach((s,i)=>label(s,x,y+i*20,16,"#1c2b47"))}
+function sceneryShape(x,y,kind,i){
+ctx.save();ctx.translate(x,y);
+if(kind===1){ctx.fillStyle="#173e4b";rect(-5,-31,10,35,"#7b6658",2);ctx.fillStyle=i%2?"#59ba82":"#83d895";for(let j=0;j<3;j++){ctx.beginPath();ctx.arc((j-1)*10,-36-j%2*11,18,0,Math.PI*2);ctx.fill()}}
+if(kind===2){ctx.fillStyle="#e2e5b4";rect(-3,-28,6,30,"#c6d8b0",2);ctx.fillStyle=i%2?"#f5a7d5":"#a9e5e0";ctx.beginPath();ctx.ellipse(0,-30,21,12,0,Math.PI,Math.PI*2);ctx.fill();ctx.fillStyle="#fff5ce";for(let j=-1;j<=1;j++){ctx.beginPath();ctx.arc(j*10,-36,3,0,Math.PI*2);ctx.fill()}}
+if(kind===3){ctx.fillStyle="#342a65";rect(-17,-58,34,60,"#3b316c",2);rect(-22,-68,44,12,"#7666b6",2);ctx.fillStyle="#c8a7ff";for(let j=-1;j<=1;j++)rect(j*10-3,-48,6,15,"#b6e4ff",2);ctx.fillStyle="#9befff";ctx.beginPath();ctx.moveTo(27,-5);ctx.lineTo(37,-39);ctx.lineTo(47,-5);ctx.fill()}
+if(kind===4){ctx.fillStyle="#43263f";ctx.beginPath();ctx.moveTo(-37,0);ctx.lineTo(0,-68);ctx.lineTo(37,0);ctx.fill();ctx.fillStyle="#ff9e4d";ctx.beginPath();ctx.moveTo(-13,-46);ctx.lineTo(0,-58);ctx.lineTo(13,-46);ctx.lineTo(3,-37);ctx.fill();ctx.strokeStyle="#ffae55";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(0,-38);ctx.lineTo(-7,-17);ctx.lineTo(6,0);ctx.stroke()}
+if(kind===5){ctx.fillStyle="#7463a6";ctx.beginPath();ctx.ellipse(0,-5,49,10,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#f9d776";rect(-22,-52,44,46,"#f5cf68",3);rect(-29,-59,58,12,"#ffeb99",2);for(let j=-1;j<=1;j++)rect(j*17-5,-71,10,17,"#ffdf7d",2);rect(-5,-39,10,17,"#7550a6",3)}
+ctx.restore()}
+function drawScenery(){ctx.save();ctx.beginPath();ctx.rect(0,0,1000,145);ctx.clip();
+for(let i=0;i<13;i++){let x=((i*164-scroll*.16)%1200+1200)%1200-100,y=143-(i%3)*7;sceneryShape(x,y,level,i)}
+if(level===1){ctx.fillStyle="#f0f6ff";ctx.globalAlpha=.65;for(let i=0;i<5;i++){let x=((i*260-scroll*.08)%1300+1300)%1300-100;ctx.beginPath();ctx.ellipse(x,30+i%3*14,48,12,0,0,Math.PI*2);ctx.fill()}}
+if(level===2){ctx.fillStyle="#d3f9ff";ctx.globalAlpha=.65;for(let i=0;i<5;i++){let x=((i*290-scroll*.11)%1300+1300)%1300-100;rect(x,68,11,77,"#b0f6ed",4)}}
+if(level===4){ctx.fillStyle="#ffcf9b";ctx.globalAlpha=.32;for(let i=0;i<10;i++){let x=((i*130-scroll*.12)%1200+1200)%1200;ctx.beginPath();ctx.arc(x,22+i%5*19,9+i%3*5,0,Math.PI*2);ctx.fill()}}
+if(level===5){ctx.fillStyle="#fff3ba";for(let i=0;i<28;i++){let x=((i*89-scroll*.05)%1100+1100)%1100,y=(i*47)%125;ctx.globalAlpha=.3+.3*Math.sin(runningTime*2+i);ctx.fillRect(x,y,3,3)}}
+ctx.restore()}
 function render(t){let dt=Math.min(.05,(t-last)/1000||0);last=t;if(status==="playing"){runningTime+=dt;progress+=dt/Math.max(2.5,7.4/(1+score*.00045));scroll+=dt*180*(1+score*.00045);if(progress>=1)resolve()}flash=Math.max(0,flash-dt);const worlds=[
 {sky:["#152b58","#315f7b"],hill:"#23476a",base:"#203a55",lane:"#2c4c69",active:"#395e80",line:"#7792ab",accent:"#7de9b1"},
 {sky:["#14556d","#52a3a2"],hill:"#28777d",base:"#265e65",lane:"#327781",active:"#439eaa",line:"#a4e9db",accent:"#7cf2e2"},
@@ -53,6 +68,7 @@ function render(t){let dt=Math.min(.05,(t-last)/1000||0);last=t;if(status==="pla
 let grad=ctx.createLinearGradient(0,0,0,540);grad.addColorStop(0,world.sky[0]);grad.addColorStop(1,world.sky[1]);ctx.fillStyle=grad;ctx.fillRect(0,0,1000,540);
 for(let i=0;i<16;i++){let x=((i*130-scroll*.25)%1150+1150)%1150-100;ctx.fillStyle=world.hill;ctx.beginPath();ctx.moveTo(x,145);ctx.lineTo(x+100,65+i%4*20);ctx.lineTo(x+200,145);ctx.fill()}
 if(level>=3){ctx.save();ctx.globalAlpha=.3;ctx.fillStyle=world.accent;for(let i=0;i<19;i++){let x=((i*117-scroll*(level===5?.6:.15))%1120+1120)%1120;ctx.fillRect(x,30+(i*61)%110,level===5?5:3,level===5?5:3)}ctx.restore()}
+drawScenery();
 rect(0,145,1000,335,world.base);lanes.forEach((y,i)=>{rect(0,y-43,1000,86,i===selected?world.active:world.lane,8);for(let x=-90-scroll%90;x<1100;x+=90)rect(x,y+35,42,4,world.line,2);if(level>=2){for(let x=-120-(scroll*.7)%150;x<1100;x+=150)rect(x,y-39,level>=4?38:22,level>=4?5:3,world.accent,2)}if(level>=3){ctx.save();ctx.globalAlpha=i===selected?.7:.3;ctx.strokeStyle=world.accent;ctx.lineWidth=level===5?4:2;ctx.beginPath();ctx.moveTo(0,y-40);ctx.lineTo(1000,y-40);ctx.stroke();ctx.restore()}if(level===5){for(let x=-160-(scroll*1.3)%200;x<1100;x+=200){ctx.save();ctx.globalAlpha=.35;ctx.fillStyle=world.accent;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+20,y-16);ctx.lineTo(x+40,y);ctx.lineTo(x+20,y+16);ctx.fill();ctx.restore()}}});
 let px=950-725*Math.min(1,progress);lanes.forEach((y,i)=>{rect(px-80,y-34,160,68,i===selected?"#ffce60":"#eef4ff",12);wrapped(question[i+1],px,y-3,145)});
 let y=lanes[selected]+Math.sin(runningTime*18)*3, power=level-1;

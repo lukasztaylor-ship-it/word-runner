@@ -25,7 +25,7 @@ const jakiesCosNotes="0,85,60;240,77,61;480,119,64;720,157,65;960,240,65;1440,10
 // So So MIDI: 349 notes, 100 BPM, timestamps normalized to the first note.
 // Base64 encodes each note as 16-bit little-endian delta tick, duration tick, 8-bit pitch.
 const soSoNotes=(()=>{const bytes=Uint8Array.from(atob("AABUAEAAAFQAQwAAeAA88ABRAEAAAFEAQwAAeAA88AB4ADwAAHgAQAAAeABD8ABNAEAAAE0AQwAAeAA88ADIADwAAMgAQAAAyABD4AHGAD4AAMYAQQAAxgBF4AFRAEAAAFEAQwAAoQA88ABPAEMAAHgAPAAAeABA8ABPAEMAAHgAQAAAoQA88ABPAEAAAE8AQwAAeAA88AByAEMAAKQAPAAAxwBA4AGdAEEAAMcAOwAAxwA+4AFUAEAAAHgAPAAAeABD8AB5ADwAAHkAQAAAeQBD8AB9ADwAAH0AQAAAfQBD8ABOAEMAAHgAPAAAeABA8ACdADwAAJ0AQAAAnQBD4AGbAD4AAJsAQQAAmwBF4AFUAEMAAFUARwAAeABA8ABXAEEAAFcARQAAVwBI8ABUAEAAAFQAQwAAVABH8ABTAD4AAFMARfAAPgFDAABpAUAAAJMBPMADeABDAACjADwAAKMAQPAAVABDAAB4ADwAAHgAQPAAeQBAAAB5AEMAAJ0APPAAVAA8AABUAEAAAFQAQ/AAzQBDAADxADwAAPEAQOABzAA+AADMAEEAAMwAReABeQBDAACcADwAAJwAQPAAeAA8AAB4AEAAAHgAQ/AAVQBAAABVAEMAAHkAPPAAKwBAAAArAEMAAHcAPPAAnABAAACcAEMAANgAPOABxgBBAADwADsAAPAAPuABeAA8AAB4AEAAAHgAQ/AATgA8AABOAEAAAE4AQ/AAdwA8AAB3AEAAAHcAQ/AAeQA8AAB5AEAAAHkAQ/AAnABDAADGAEAAAPAAPOABxwA+AADHAEEAAMcAReABxgA8AADGAEAAAMYAQ+ABPgE7AAA+AT4AAD4BQeABBAJAAAAJAkMAAFcCPDgEewA7AAB7AD4AAHsAQfAAVAA+AABUAEEAAH4AO/AATgA+AABOAEEAAKQAO/AAIwBBAABNAD4AAHgAO/AARAE7AABEAT4AAEQBQeABzAA8AADMAEAAAMwAQ+ABfgA7AAB+AD4AAH4AQWgBVAA7AABUAD4AAFQAQfAAKQBBAAB4ADsAAHgAPvAALgJBAABSAjsAAFICPsADnAA7AACcAD4AAJwAQfAATgBBAAB3ADsAAHcAPvAATgBBAAB4ADsAAHgAPvAAeAA7AAB4AD4AAHgAQfAAnQBBAADIADsAAPAAPuABxgA8AADGAEAAAMYAQ+ABxgA+AADGAEEAAMYAReABywBAAADLAEMAAMsAR+ABLAJDAABWAkAAAHoCPDgE8wI7OAQMAjnAAwsCN0gDewI1SAPQAjTAA9ACMsAD0QIwwAOrAjDAA3YAQAAAdgBDAACdADAAAJ8APPAAVQBAAABVAEMAAJwAPPAAdwA8AAB3AEAAAHcAQ/AATgAwAAB3AEAAAHcAQwAAnAA88ADwADAAAPAAQAAAGgE8AAAaAUPgAfEAPgAA8QBBAADxAEUAAD8BMuABeABAAACeADAAAJ4APAAAngBD8AB4ADAAAHgAPAAAeABAAAB4AEPwAHgAPAAAeABAAAB4AEMAAKEAMPAATQBDAAB4ADAAAHgAPAAAeABA8AA+AUAAAD4BQwAAaAE8AABpATA4BHcAMAAAdwA8AAB3AEAAAHcAQ/AAeABDAACiADAAAKIAPAAAogBA8AB4ADAAAHgAPAAAeABAAAB4AEPwABkBMAAAGQE8AAAZAUAAABkBQ1gC8AA+AADwAEEAAPAARQAAFQEy4AF5ADwAAHkAQAAAeQBDAACiADDwAHkAPAAAeQBAAAB5AEMAAKMAMPAAeQAwAAB5ADwAAHkAQAAAeQBD8ABLAEMAAKAAMAAAoAA8AACgAEDwAIwBMAAAjAFDAAC2ATwAALYBQMADogA88AB6AEDwAHgAQ/AAdwBA8ABoATzgARQBQOABVABAAACiAD7wAFUAQfAAmwBF8ABUAEHwABoBPuABCQFB4AGiADzwAHgAQPAAnABD8AB3AEDwAEMBPOAB8ABA4AGoAD7wAHgAQfAAeABF8AB5AEHwAGgBPuAB8QBB4AF4ADzwAE4AQPAAeQBF8AB4AEDwABUBPOABeAA8AAB4AEAAAHgAQ/AAeAA8AAB4AEAAAHgAQ/AA8AA+8ACdAEHwAMUARfAAeQBB8AAYAT7gAXgAPgAAeABBAAB4AEXwAHgAPgAAeABBAAB4AEXwAMwAPPAAnABA8ADGAEPwAKIAQPAAFAE84AF4AEMAAJwAPAAAnABA8ABTAEAAAFMAQwAAeAA88ADvAD7wAHgAQfAAogBF8AB4AEHwABUBPuABxwBBAADHAEUAAPEAPuABOwY8AAA7BkAAADsGQ9ACowAw8AAKAjA="),c=>c.charCodeAt(0)),view=new DataView(bytes.buffer),notes=[];let tick=0;for(let i=0;i+4<bytes.length;i+=5){tick+=view.getUint16(i,true);notes.push([tick,view.getUint16(i+2,true),bytes[i+4]])}return notes})();
-let midiLoopStart=0,midiNextIndex=0,midiDrumStep=0,midiPlaybackToken=0;
+let midiLoopStart=0,midiNextIndex=0,midiDrumStep=0,midiPlaybackToken=0,midiLoopCount=0;
 // Match the Retro 8-Bit preset in the MIDI Sound Lab: square lead + octave-down triangle.
 function playMidiNote(note,seconds,duration){
  if(!soundEnabled||!audioCtx||musicVolume<=0)return;
@@ -43,7 +43,7 @@ function playMidiNote(note,seconds,duration){
   osc.connect(level).connect(gain);osc.start(when);osc.stop(end+.04);
  }
 }
-// Drum machine for Track 6 only: 100 BPM, kick/snare backbeat and eighth-note hats.
+// Track 6 arrangement: 4 bars (9.6 seconds) of melody-only intro, then drums enter and remain on every repeat.
 let drumNoiseBuffer=null;
 function playMidiDrum(kind,at){
  if(!audioCtx||!soundEnabled||musicVolume<=0)return;
@@ -65,7 +65,7 @@ function playMidiDrum(kind,at){
 function midiTick(){
  if(status!=="playing"||!audioCtx||!soundEnabled||trackIndex<5)return;
  const now=audioCtx.currentTime,notes=trackIndex===6?soSoNotes:jakiesCosNotes,loopSeconds=trackIndex===6?70.1:76.8;
- while(midiLoopStart+loopSeconds<now+.1){midiLoopStart+=loopSeconds;midiNextIndex=0;midiDrumStep=0}
+ while(midiLoopStart+loopSeconds<now+.1){midiLoopStart+=loopSeconds;midiNextIndex=0;midiDrumStep=0;midiLoopCount++}
  while(midiNextIndex<notes.length){
   const [tick,len,note]=notes[midiNextIndex],at=midiLoopStart+tick*.00125;
   if(at>now+.15)break;
@@ -76,7 +76,7 @@ function midiTick(){
   while(midiDrumStep<256){
    const at=midiLoopStart+midiDrumStep*.3;
    if(at>now+.15)break;
-   if(at>=now-.05){
+   if(at>=now-.05&&(midiLoopCount>0||midiDrumStep>=32)){
     if(midiDrumStep%4===0)playMidiDrum("kick",at);
     if(midiDrumStep%4===2)playMidiDrum("snare",at);
     playMidiDrum("hat",at);
@@ -89,7 +89,7 @@ function unlockAudio(){try{const AudioClass=window.AudioContext||window.webkitAu
 function beep(freq,duration=.12,type="square",volume=.065,delay=0,slide=0,channel="sfx"){if(!soundEnabled)return;let level=channel==="music"?musicVolume/.35:sfxVolume/.65;if(level<=0)return;unlockAudio();if(!audioCtx)return;const now=audioCtx.currentTime+delay,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=type;osc.frequency.setValueAtTime(freq,now);if(slide)osc.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide),now+duration);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(Math.max(.0001,volume*level),now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);osc.connect(gain).connect(audioCtx.destination);osc.start(now);osc.stop(now+duration+.02)}
 function musicTick(){if(status!=="playing"||musicVolume<=0)return;let t=tracks[trackIndex],step=musicStep%t[2].length,n=t[2][step];if(n)beep(n,.11,"square",.022,0,0,"music");if(step%2===0)beep(t[3][Math.floor(step/8)%4],.18,"triangle",.027,0,0,"music");if(step%4===0)beep(t[3][Math.floor(step/8)%4]*2,.09,"sawtooth",.007,0,0,"music");musicStep++}
 function stopMusic(){if(musicTimer!==null){clearInterval(musicTimer);musicTimer=null}}
-function startMusic(){stopMusic();if(!soundEnabled||status!=="playing"||musicVolume<=0)return;unlockAudio().then(ok=>{if(!ok||status!=="playing"||musicVolume<=0||musicTimer!==null)return;if(trackIndex>=5){midiLoopStart=audioCtx.currentTime+.08;midiNextIndex=0;midiDrumStep=0;midiTick();musicTimer=setInterval(midiTick,75)}else{musicTick();musicTimer=setInterval(musicTick,tracks[trackIndex][1])}})}
+function startMusic(){stopMusic();if(!soundEnabled||status!=="playing"||musicVolume<=0)return;unlockAudio().then(ok=>{if(!ok||status!=="playing"||musicVolume<=0||musicTimer!==null)return;if(trackIndex>=5){midiLoopStart=audioCtx.currentTime+.08;midiNextIndex=0;midiDrumStep=0;midiLoopCount=0;midiTick();musicTimer=setInterval(midiTick,75)}else{musicTick();musicTimer=setInterval(musicTick,tracks[trackIndex][1])}})}
 function changeTrack(delta){trackIndex=(trackIndex+delta+tracks.length)%tracks.length;musicStep=0;$("trackName").textContent=(trackIndex+1)+" / "+tracks.length+" · "+tracks[trackIndex][0];if(status==="playing")startMusic()}
 function royalFanfare(which){const notes=which===7?[392,523,659,784,1047,1319,1568,2093]:[164.81,196,246.94,329.63,493.88,659.25,987.77,1318.5];notes.forEach((n,i)=>{beep(n,.3,which===7?"triangle":"sawtooth",.065,i*.29,0,"sfx");beep(n/2,.38,"sine",.045,i*.29,0,"sfx")})}
 function infernoFanfare(){const notes=[196,261.63,329.63,392,523.25,659.25,783.99,1046.5,1318.5,1567.98];notes.forEach((n,i)=>{beep(n,.23,i%3===0?"sawtooth":"square",.065,i*.25,0,"sfx");if(i%2===0)beep(n/2,.3,"triangle",.045,i*.25,0,"sfx")});beep(196,.85,"sawtooth",.045,2.5,0,"sfx")}

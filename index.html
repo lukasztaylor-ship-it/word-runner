@@ -155,7 +155,17 @@ function midiTick(){
   }return;
  }
  if(trackIndex===7){
-  if(!mozartNotes)return;
+  // If MIDI decoding is unavailable, play the built-in Mozart arrangement instead of silence.
+  if(!mozartNotes||!mozartNotes.length){
+   const score=classicalScores[0],now=audioCtx.currentTime;
+   while(midiLoopStart+score.length<now+.1){midiLoopStart+=score.length;midiNextIndex=0}
+   while(midiNextIndex<score.notes.length){
+    const [step,units,pitch]=score.notes[midiNextIndex],at=midiLoopStart+step*score.step;
+    if(at>now+.15)break;
+    if(at>=now-.05)playMidiNote(pitch,at,Math.max(.055,units*score.step*.88));
+    midiNextIndex++;
+   }return;
+  }
   const now=audioCtx.currentTime,loopSeconds=60;
   while(midiLoopStart+loopSeconds<now+.1){midiLoopStart+=loopSeconds;midiNextIndex=0}
   while(midiNextIndex<mozartNotes.length){const [ms,duration,pitch]=mozartNotes[midiNextIndex],at=midiLoopStart+ms/1000;if(at>now+.15)break;if(at>=now-.05)playMidiNote(pitch,at,Math.max(.05,duration/1000));midiNextIndex++}return;
@@ -211,7 +221,7 @@ function unlockAudio(){try{const AudioClass=window.AudioContext||window.webkitAu
 function beep(freq,duration=.12,type="square",volume=.065,delay=0,slide=0,channel="sfx"){if(!soundEnabled)return;let level=channel==="music"?musicVolume/.35:sfxVolume/.65;if(level<=0)return;unlockAudio();if(!audioCtx)return;const now=audioCtx.currentTime+delay,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=type;osc.frequency.setValueAtTime(freq,now);if(slide)osc.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide),now+duration);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(Math.max(.0001,volume*level),now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);osc.connect(gain).connect(audioCtx.destination);osc.start(now);osc.stop(now+duration+.02)}
 function musicTick(){if(status!=="playing"||musicVolume<=0)return;let t=tracks[trackIndex],step=musicStep%t[2].length,n=t[2][step];if(n)beep(n,.11,"square",.022,0,0,"music");if(step%2===0)beep(t[3][Math.floor(step/8)%4],.18,"triangle",.027,0,0,"music");if(step%4===0)beep(t[3][Math.floor(step/8)%4]*2,.09,"sawtooth",.007,0,0,"music");musicStep++}
 function stopMusic(){if(musicTimer!==null){clearInterval(musicTimer);musicTimer=null}}
-function startMusic(){stopMusic();if(!soundEnabled||status!=="playing"||musicVolume<=0)return;unlockAudio().then(async ok=>{if(!ok||status!=="playing"||musicVolume<=0||musicTimer!==null)return;if(trackIndex===8){try{await loadOdeMidi()}catch(e){console.error("Ode to Joy MIDI load failed",e);return}if(status!=="playing"||trackIndex!==8)return}if(trackIndex===10){try{await loadTurkishMidi()}catch(e){console.error("Turkish March MIDI load failed",e);return}if(status!=="playing"||trackIndex!==10)return}if(trackIndex===7){try{await loadMozartMidi()}catch(e){console.error("Mozart MIDI load failed",e);return}if(status!=="playing"||trackIndex!==7)return}if(trackIndex===9){try{await loadMountainMidi()}catch(e){console.error("Mountain King MIDI load failed",e);return}if(status!=="playing"||trackIndex!==9)return}if(trackIndex>=5){midiLoopStart=audioCtx.currentTime+.08;midiNextIndex=0;midiDrumStep=0;midiLoopCount=0;midiTick();musicTimer=setInterval(midiTick,75)}else{musicTick();musicTimer=setInterval(musicTick,tracks[trackIndex][1])}})}
+function startMusic(){stopMusic();if(!soundEnabled||status!=="playing"||musicVolume<=0)return;unlockAudio().then(async ok=>{if(!ok||status!=="playing"||musicVolume<=0||musicTimer!==null)return;if(trackIndex===8){try{await loadOdeMidi()}catch(e){console.error("Ode to Joy MIDI load failed",e);return}if(status!=="playing"||trackIndex!==8)return}if(trackIndex===10){try{await loadTurkishMidi()}catch(e){console.error("Turkish March MIDI load failed",e);return}if(status!=="playing"||trackIndex!==10)return}if(trackIndex===7){try{await loadMozartMidi()}catch(e){console.warn("Mozart MIDI decoding failed; using built-in 8-bit arrangement",e);mozartNotes=[]}if(status!=="playing"||trackIndex!==7)return}if(trackIndex===9){try{await loadMountainMidi()}catch(e){console.error("Mountain King MIDI load failed",e);return}if(status!=="playing"||trackIndex!==9)return}if(trackIndex>=5){midiLoopStart=audioCtx.currentTime+.08;midiNextIndex=0;midiDrumStep=0;midiLoopCount=0;midiTick();musicTimer=setInterval(midiTick,75)}else{musicTick();musicTimer=setInterval(musicTick,tracks[trackIndex][1])}})}
 function changeTrack(delta){trackIndex=(trackIndex+delta+tracks.length)%tracks.length;musicStep=0;$("trackName").textContent=(trackIndex+1)+" / "+tracks.length+" · "+tracks[trackIndex][0];if(status==="playing")startMusic()}
 function royalFanfare(which){const notes=which===7?[392,523,659,784,1047,1319,1568,2093]:[164.81,196,246.94,329.63,493.88,659.25,987.77,1318.5];notes.forEach((n,i)=>{beep(n,.3,which===7?"triangle":"sawtooth",.065,i*.29,0,"sfx");beep(n/2,.38,"sine",.045,i*.29,0,"sfx")})}
 function infernoFanfare(){const notes=[196,261.63,329.63,392,523.25,659.25,783.99,1046.5,1318.5,1567.98];notes.forEach((n,i)=>{beep(n,.23,i%3===0?"sawtooth":"square",.065,i*.25,0,"sfx");if(i%2===0)beep(n/2,.3,"triangle",.045,i*.25,0,"sfx")});beep(196,.85,"sawtooth",.045,2.5,0,"sfx")}

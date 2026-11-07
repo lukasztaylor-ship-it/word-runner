@@ -19,7 +19,7 @@ const tracks=[
 ["Starry Sprint",200,[784,659,784,988,880,784,659,587,659,784,880,988,1046,988,880,0,784,880,988,1175,1046,988,880,784,659,784,880,784,659,587,523,0],[196,220,261.63,174.61]],
 ["War&Peace",75,[],[]],
 ["So So (Your MIDI)",75,[],[]],
-["Mozart · Eine kleine Nachtmusik (8-Bit)",75,[],[]],
+["Mozart · Eine kleine Nachtmusik Rondo (8-Bit)",75,[],[]],
 ["Beethoven · Ode to Joy (8-Bit)",75,[],[]],
 ["Grieg · In the Hall of the Mountain King (8-Bit)",75,[],[]]
 ];
@@ -90,8 +90,27 @@ async function loadMountainMidi(){
  })();
  return mountainLoading;
 }
+// Mozart Rondo uploaded MIDI: opening 60 seconds, 513 notes; violin and cello.
+let mozartNotes=null,mozartLoading=null;
+async function loadMozartMidi(){
+ if(mozartNotes)return mozartNotes;
+ if(mozartLoading)return mozartLoading;
+ mozartLoading=(async()=>{
+ const binary=Uint8Array.from(atob("eNq9Vs9q40YY/yQ5eZlgUoSxUW3rUoKxUKVVlebSU/G6YXterWzLfYdCH6CwFPIGfYrF6F5Y9tw0G5o4MbSXzny/kWbGdvdS6OnjN/P9/zfzyiUKKVoT0YjSiiTKJfqJfqJrsQVvXUGT0DPIDtNfqTkRJB35D/wYYK7VMptiOVGlIVQPWaSKBQy56XkrKkPC5cQzw1xgXbMkoHTv4a78DNdw93qmLu7A1JTAtX+k3ZCuATP4lA7WDcx9FQMkiVoBawYMoc5P4PZDPYigrsSXVO8ZpJUpurBTpOazpfU1iFsWPzlJ8qxO1aOzrFykDaky2HF/l/Lobyu/q9yhCjHsZbK3GPlUO4+oRyVLsfMZdVzOkONBhWjgYEEWTFh1a9oIKtSwvl5cxcptGSduazDSzpbWlrWYLF0XoJzsGCdmUIlHJToO9xd05VE37p8VzcZbIi0/poCqbqg/kofztFEM3e4PibnMMsIciz+0Bz20a3Kz1yNmsNkuAJyNSqIgy5oCOc5rSpM0RqQa5DkHDZB892iTaTDxEcvRZDzVxaqWC7y2J6P9Ewgdw5fJi6Tc+j8AndnyIsqlY9KhzgMMbAXIIlUPaMRxG2WCQjHMEPsgmXJh/kJDlXdcXh1guZ7gBYPaGuhW+HhBye7c6TcFFsj2nEzxEAJSPrRkYElSAEvwJJeAGVAXwHlQGmlV9AHJ5IW7mn6Efb+Eoe38KWkqccJ6W1hHagPFHuICCgBCrbsYHrKZLhlgbEk92DZUPjIZrl377AO7+n8kYN+0WHSA0sOe13kM/iBUaDQiuUyZDdAwblbX1Kw1iwiaKUFLDxOcwiIrvNMlCi05AURG0ipPnpYNlqUhSYT0Blb9iLDXk3TjqXsML6i6Z4uBiizVKeGL9r5hS6ORh0t1xbOvFOcBaXK3hsrFFiIvWOhLHWj1Lgr0VkFTSu9W0tMx2/O5zD7JYY5xg6JwMIJuYWW15ATWtaWFg9alpaWSr+Uype7JqI9X4DSSvup5qH4xF0JC/eUfs+P24Vhb4TBu0Fx3jo8OTd4ZWxSw7MNhqTGTNdIZI2xaN+4CGSq0Fjvlw2NMSvpTu8lIQ6dCQ7jU370gxncNZIsGmUNl2Slf3Z4BWk/nzWqaKq0/HngUkCTsUYqhg3m/SCGsUY1mqjG1mjf6XhsCsShDkwla/9hN38CYmdJzvfO6HeHd0+HSzVEm04q2v+O3OBZEv+QR6DdAamsUu2HMgkPYq/b2MfH6qd+LNA5QKnSZyQEKy9AUXmzz90MXd6XO/m908OM5ZW5vXmzz9zklDn5tRARLcw3oPnUgDNCwYM/BOcvTnehWcpmxi7Uo3HKS6CPJZBjefRLzuDXWBd9ZPfK06hs7nqlKdcDZ2bcqdd+jjvxbYI9v8BzhrfDfwM5WPChRe1yHwlRd+ozlHr6hW3X4WBhri71TbOXY2Qt1ehf93VBkbWM1XLsWha6sD41XgTVISs8dS1RGWxmEyxsaNSOKA7DrYn29guaaPK3qXoALU3rQ44/IKN2ApTqX5nlm9A8VBbyfwAOYl0w"),c=>c.charCodeAt(0));
+ const bytes=new Uint8Array(await new Response(new Blob([binary]).stream().pipeThrough(new DecompressionStream("deflate"))).arrayBuffer());
+ const view=new DataView(bytes.buffer),notes=[];let t=0;
+ for(let i=0;i+6<bytes.length;i+=7){t+=view.getUint32(i,true);notes.push([t,view.getUint16(i+4,true),bytes[i+6]])}
+ return mozartNotes=notes;
+ })();return mozartLoading;
+}
 function midiTick(){
  if(status!=="playing"||!audioCtx||!soundEnabled||trackIndex<5)return;
+ if(trackIndex===7){
+  if(!mozartNotes)return;
+  const now=audioCtx.currentTime,loopSeconds=60;
+  while(midiLoopStart+loopSeconds<now+.1){midiLoopStart+=loopSeconds;midiNextIndex=0}
+  while(midiNextIndex<mozartNotes.length){const [ms,duration,pitch]=mozartNotes[midiNextIndex],at=midiLoopStart+ms/1000;if(at>now+.15)break;if(at>=now-.05)playMidiNote(pitch,at,Math.max(.05,duration/1000));midiNextIndex++}return;
+ }
  if(trackIndex===9){
   if(!mountainNotes)return;
   const now=audioCtx.currentTime,secondsPerTick=60/110/384,loopSeconds=185.45436;
@@ -143,7 +162,7 @@ function unlockAudio(){try{const AudioClass=window.AudioContext||window.webkitAu
 function beep(freq,duration=.12,type="square",volume=.065,delay=0,slide=0,channel="sfx"){if(!soundEnabled)return;let level=channel==="music"?musicVolume/.35:sfxVolume/.65;if(level<=0)return;unlockAudio();if(!audioCtx)return;const now=audioCtx.currentTime+delay,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=type;osc.frequency.setValueAtTime(freq,now);if(slide)osc.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide),now+duration);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(Math.max(.0001,volume*level),now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);osc.connect(gain).connect(audioCtx.destination);osc.start(now);osc.stop(now+duration+.02)}
 function musicTick(){if(status!=="playing"||musicVolume<=0)return;let t=tracks[trackIndex],step=musicStep%t[2].length,n=t[2][step];if(n)beep(n,.11,"square",.022,0,0,"music");if(step%2===0)beep(t[3][Math.floor(step/8)%4],.18,"triangle",.027,0,0,"music");if(step%4===0)beep(t[3][Math.floor(step/8)%4]*2,.09,"sawtooth",.007,0,0,"music");musicStep++}
 function stopMusic(){if(musicTimer!==null){clearInterval(musicTimer);musicTimer=null}}
-function startMusic(){stopMusic();if(!soundEnabled||status!=="playing"||musicVolume<=0)return;unlockAudio().then(async ok=>{if(!ok||status!=="playing"||musicVolume<=0||musicTimer!==null)return;if(trackIndex===9){try{await loadMountainMidi()}catch(e){console.error("Mountain King MIDI load failed",e);return}if(status!=="playing"||trackIndex!==9)return}if(trackIndex>=5){midiLoopStart=audioCtx.currentTime+.08;midiNextIndex=0;midiDrumStep=0;midiLoopCount=0;midiTick();musicTimer=setInterval(midiTick,75)}else{musicTick();musicTimer=setInterval(musicTick,tracks[trackIndex][1])}})}
+function startMusic(){stopMusic();if(!soundEnabled||status!=="playing"||musicVolume<=0)return;unlockAudio().then(async ok=>{if(!ok||status!=="playing"||musicVolume<=0||musicTimer!==null)return;if(trackIndex===7){try{await loadMozartMidi()}catch(e){console.error("Mozart MIDI load failed",e);return}if(status!=="playing"||trackIndex!==7)return}if(trackIndex===9){try{await loadMountainMidi()}catch(e){console.error("Mountain King MIDI load failed",e);return}if(status!=="playing"||trackIndex!==9)return}if(trackIndex>=5){midiLoopStart=audioCtx.currentTime+.08;midiNextIndex=0;midiDrumStep=0;midiLoopCount=0;midiTick();musicTimer=setInterval(midiTick,75)}else{musicTick();musicTimer=setInterval(musicTick,tracks[trackIndex][1])}})}
 function changeTrack(delta){trackIndex=(trackIndex+delta+tracks.length)%tracks.length;musicStep=0;$("trackName").textContent=(trackIndex+1)+" / "+tracks.length+" · "+tracks[trackIndex][0];if(status==="playing")startMusic()}
 function royalFanfare(which){const notes=which===7?[392,523,659,784,1047,1319,1568,2093]:[164.81,196,246.94,329.63,493.88,659.25,987.77,1318.5];notes.forEach((n,i)=>{beep(n,.3,which===7?"triangle":"sawtooth",.065,i*.29,0,"sfx");beep(n/2,.38,"sine",.045,i*.29,0,"sfx")})}
 function infernoFanfare(){const notes=[196,261.63,329.63,392,523.25,659.25,783.99,1046.5,1318.5,1567.98];notes.forEach((n,i)=>{beep(n,.23,i%3===0?"sawtooth":"square",.065,i*.25,0,"sfx");if(i%2===0)beep(n/2,.3,"triangle",.045,i*.25,0,"sfx")});beep(196,.85,"sawtooth",.045,2.5,0,"sfx")}

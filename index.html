@@ -74,8 +74,36 @@ const classicalScores=[
  {bpm:132,melody:[[64,2],[64,2],[65,2],[67,2],[67,2],[65,2],[64,2],[62,2],[60,2],[60,2],[62,2],[64,2],[64,3],[62,1],[62,4],[64,2],[64,2],[65,2],[67,2],[67,2],[65,2],[64,2],[62,2],[60,2],[60,2],[62,2],[64,2],[62,3],[60,1],[60,4],[62,2],[62,2],[64,2],[60,2],[62,2],[64,1],[65,1],[64,2],[60,2],[62,2],[64,1],[65,1],[64,2],[62,2],[60,2],[62,2],[55,4],[64,2],[64,2],[65,2],[67,2],[67,2],[65,2],[64,2],[62,2],[60,2],[60,2],[62,2],[64,2],[62,3],[60,1],[60,4]]},
  {bpm:156,melody:[[59,1],[61,1],[62,1],[64,1],[66,1],[62,1],[66,1],[65,1],[61,1],[65,1],[64,1],[61,1],[64,1],[62,1],[59,1],[61,2],[62,1],[64,1],[66,1],[62,1],[66,1],[71,1],[69,1],[66,1],[62,1],[66,1],[69,1],[71,1],[74,1],[73,1],[71,1],[69,2],[71,1],[73,1],[74,1],[76,1],[78,1],[74,1],[78,1],[77,1],[73,1],[77,1],[76,1],[73,1],[76,1],[74,1],[71,1],[73,2],[74,1],[76,1],[78,1],[74,1],[78,1],[83,1],[81,1],[78,1],[74,1],[78,1],[81,1],[83,1],[86,1],[85,1],[83,1],[81,2],[0,2]]}
 ].map(score=>{let t=0;const notes=score.melody.flatMap(([pitch,units])=>{const start=t;t+=units;return pitch?[[start,units,pitch]]:[]});return {notes,step:60/score.bpm/2,length:t*60/score.bpm/2}});
+// Complete uploaded MIDI arrangement: 1,163 notes from 8 source tracks, 110 BPM.
+// Deflate-packed event data: deltaTick u16, durationTick u16, pitch u8, sourceTrack u8.
+let mountainNotes=null,mountainLoading=null;
+async function loadMountainMidi(){
+ if(mountainNotes)return mountainNotes;
+ if(mountainLoading)return mountainLoading;
+ mountainLoading=(async()=>{
+  const binary=Uint8Array.from(atob("eNrtWF2O2jAQHiegXgOpfWhXqigIUNlAxCIgCw996Y/aSitxFI6yR+EoHKWezzGeJDZQou5uF14+jTz/M/ZkgGhNbSJqqbdqq+kOMd4o0tgF3QMOhExXyAxoo9bUr1j4AG4f3J7gfgL3Pbg9cOt5ZzoBDoXMoGKHT1rqo2KZIT1Gl5q1sXkD+c+Q6UD+FvQIOBYyt0JmjMhTwTUxdMFNwT2se9h7UtP7RrHkRo0vKFOKr+/3f876uMxGc7nXbfQ6QQXaEe6PqVWEWwF6ApwKmVTITBVHflex0Af3DtyJ4I7A7YE7Abeed6Yz4FzITCt2+ER3OWKZueJeW79+7+EY/JH4quGvia8y/vq8hCoZmwNwZ8p4Z/kF6HvgUsgshMwSka8E18SQgrsC97DuYe9ZTe961uEVaAvxa860xd+ON2ty+cr7f3mv3v/2KTABLO7Ul9jERoUI/ZOBAvPBIluzNfRPDArMDYvWgo2nOkkoME8sWgvn12RzYk2c5PHKWMkMJ67Lrtdlm1b3eJz25lQtbAtaxfNOgwJa8BtLdPK597iI7q5SwELAjteas0l6f0liiSEvxywfihD7A2iDX/eotcz+iROD33OExyblm0kx/h854haBNvgzx22pMr/3aD2GrEmPPgt4faAN/trjabn0yekWLeBVenJxlkc4MfgtR2e5RxSoBl7rK6k/XiLoDPQctMGHPVovIQun5OXX5Z0f34XY4UOO+FJc7/n1nv/Te/48dxu77l5Lb4yIYYaTGWwOm5T/k6D3zNggdmDQ96CXoJfCgpSUFqwkdlTQK6ElK2O0UrIyjNicz/J1Xo4ynqfLEf+68GYe53jt0Yvv0WNUnkWhNytnTvHNlmdLaJ4UZ3jYb3FWF+dzeSaH5nBx9j5djuUuFHWrWtszJPmcJRn1hhwzcr6m40nu3XxrJk0/t9XQNH4pJOZXkvnFB5yYzVmcGDoDLoJcvkv1IiGxmZuoXL/SSPQoEj2KXH2kjDzPIteRReRe1t/onpfdruE/f94T3gzfNddUF3f5/717+yS9/AGJMwt4"),c=>c.charCodeAt(0));
+  const stream=new Blob([binary]).stream().pipeThrough(new DecompressionStream("deflate"));
+  const bytes=new Uint8Array(await new Response(stream).arrayBuffer()),view=new DataView(bytes.buffer);
+  let tick=0;const notes=[];
+  for(let i=0;i+5<bytes.length;i+=6){tick+=view.getUint16(i,true);notes.push([tick,view.getUint16(i+2,true),bytes[i+4],bytes[i+5]])}
+  mountainNotes=notes;return notes;
+ })();
+ return mountainLoading;
+}
 function midiTick(){
  if(status!=="playing"||!audioCtx||!soundEnabled||trackIndex<5)return;
+ if(trackIndex===9){
+  if(!mountainNotes)return;
+  const now=audioCtx.currentTime,secondsPerTick=60/110/384,loopSeconds=185.45436;
+  while(midiLoopStart+loopSeconds<now+.1){midiLoopStart+=loopSeconds;midiNextIndex=0}
+  while(midiNextIndex<mountainNotes.length){
+   const [tick,duration,pitch,part]=mountainNotes[midiNextIndex],at=midiLoopStart+tick*secondsPerTick;
+   if(at>now+.15)break;
+   if(at>=now-.05)playMidiNote(pitch,at,Math.max(.05,duration*secondsPerTick));
+   midiNextIndex++;
+  }
+  return;
+ }
  if(trackIndex>=7){
   const score=classicalScores[trackIndex-7],now=audioCtx.currentTime;
   while(midiLoopStart+score.length<now+.1){midiLoopStart+=score.length;midiNextIndex=0}
@@ -115,7 +143,7 @@ function unlockAudio(){try{const AudioClass=window.AudioContext||window.webkitAu
 function beep(freq,duration=.12,type="square",volume=.065,delay=0,slide=0,channel="sfx"){if(!soundEnabled)return;let level=channel==="music"?musicVolume/.35:sfxVolume/.65;if(level<=0)return;unlockAudio();if(!audioCtx)return;const now=audioCtx.currentTime+delay,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=type;osc.frequency.setValueAtTime(freq,now);if(slide)osc.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide),now+duration);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(Math.max(.0001,volume*level),now+.008);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);osc.connect(gain).connect(audioCtx.destination);osc.start(now);osc.stop(now+duration+.02)}
 function musicTick(){if(status!=="playing"||musicVolume<=0)return;let t=tracks[trackIndex],step=musicStep%t[2].length,n=t[2][step];if(n)beep(n,.11,"square",.022,0,0,"music");if(step%2===0)beep(t[3][Math.floor(step/8)%4],.18,"triangle",.027,0,0,"music");if(step%4===0)beep(t[3][Math.floor(step/8)%4]*2,.09,"sawtooth",.007,0,0,"music");musicStep++}
 function stopMusic(){if(musicTimer!==null){clearInterval(musicTimer);musicTimer=null}}
-function startMusic(){stopMusic();if(!soundEnabled||status!=="playing"||musicVolume<=0)return;unlockAudio().then(ok=>{if(!ok||status!=="playing"||musicVolume<=0||musicTimer!==null)return;if(trackIndex>=5){midiLoopStart=audioCtx.currentTime+.08;midiNextIndex=0;midiDrumStep=0;midiLoopCount=0;midiTick();musicTimer=setInterval(midiTick,75)}else{musicTick();musicTimer=setInterval(musicTick,tracks[trackIndex][1])}})}
+function startMusic(){stopMusic();if(!soundEnabled||status!=="playing"||musicVolume<=0)return;unlockAudio().then(async ok=>{if(!ok||status!=="playing"||musicVolume<=0||musicTimer!==null)return;if(trackIndex===9){try{await loadMountainMidi()}catch(e){console.error("Mountain King MIDI load failed",e);return}if(status!=="playing"||trackIndex!==9)return}if(trackIndex>=5){midiLoopStart=audioCtx.currentTime+.08;midiNextIndex=0;midiDrumStep=0;midiLoopCount=0;midiTick();musicTimer=setInterval(midiTick,75)}else{musicTick();musicTimer=setInterval(musicTick,tracks[trackIndex][1])}})}
 function changeTrack(delta){trackIndex=(trackIndex+delta+tracks.length)%tracks.length;musicStep=0;$("trackName").textContent=(trackIndex+1)+" / "+tracks.length+" · "+tracks[trackIndex][0];if(status==="playing")startMusic()}
 function royalFanfare(which){const notes=which===7?[392,523,659,784,1047,1319,1568,2093]:[164.81,196,246.94,329.63,493.88,659.25,987.77,1318.5];notes.forEach((n,i)=>{beep(n,.3,which===7?"triangle":"sawtooth",.065,i*.29,0,"sfx");beep(n/2,.38,"sine",.045,i*.29,0,"sfx")})}
 function infernoFanfare(){const notes=[196,261.63,329.63,392,523.25,659.25,783.99,1046.5,1318.5,1567.98];notes.forEach((n,i)=>{beep(n,.23,i%3===0?"sawtooth":"square",.065,i*.25,0,"sfx");if(i%2===0)beep(n/2,.3,"triangle",.045,i*.25,0,"sfx")});beep(196,.85,"sawtooth",.045,2.5,0,"sfx")}
